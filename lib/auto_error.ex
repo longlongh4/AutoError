@@ -6,7 +6,11 @@ defmodule AutoError do
   end
 
   defp unpipe({:~>, _, [left, right]}, acc) do
-    unpipe(right, unpipe(left, acc))
+    unpipe(right, unpipe({:chain, left}, acc))
+  end
+
+  defp unpipe({:~>>, _, [left, right]}, acc) do
+    unpipe(right, unpipe({:functor, left}, acc))
   end
 
   defp unpipe(other, acc) do
@@ -31,15 +35,22 @@ defmodule AutoError do
     pipe(left, {func, line, []})
   end
 
-  defp pipe(left, {func, _, args}) do
+  defp pipe({:chain, left}, {func, _, args}) do
     quote do
       AutoError.chain(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)
     end
   end
 
-  defmacro left ~> right do
-    [h | t] = unpipe({:~>, [], [left, right]})
+  defp pipe({:functor, left}, {func, _, args}) do
+    quote do
+      {:ok, AutoError.chain(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)}
+    end
+  end
 
+  defmacro left ~> right, do: unpipe({:~>, [], [left, right]}) |> reduce_pipe()
+  defmacro left ~>> right, do: unpipe({:~>>, [], [left, right]}) |> reduce_pipe()
+
+  defp reduce_pipe([h | t]) do
     Enum.reduce(t, h, fn expr, acc ->
       pipe(acc, expr)
     end)

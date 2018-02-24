@@ -21,5 +21,14 @@ defmodule AutoErrorTest do
   end
 
   test "test functor" do
+    assert {:ok, 3} == {:ok, 1} ~>> add_one() ~>> add_one()
+  end
+
+  test "test functor and chain" do
+    assert 5 == {:ok, 1} ~>> add_one() ~>> add_one() ~> add_one() |> add_one()
+  end
+
+  test "test format error" do
+    assert_raise(RuntimeError, "AutoError can only support processing {:ok, term} or {:error, term} with function", fn -> 1 ~> add_one() end) 
   end
 end
