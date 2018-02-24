@@ -3,6 +3,45 @@ defmodule AutoError do
   ***AutoError*** helps you to pipe between functions returning `{:ok, _}` or `{:error, _}` easily.
 
   ## Usage
+  ```elixir
+  def deps do
+    [{:auto_error, "~> 0.1"}]
+  end
+
+  # ...
+
+  import AutoError
+  ```
+
+  AutoError is easy to use, it provides two new operators `~>` and `~>>`, `~>` is called a **chain** and `~>>` is called a **functor**, 
+  don't need to concern about the new concept. Let's learn by some examples.
+
+  ## Examples
+
+      iex> {:ok, 1} ~>> fn x -> x + 1 end.()
+      {:ok, 2}
+
+      iex> {:error, 1} ~>> fn x -> x + 1 end.()
+      {:error, 1}
+
+      iex> {:ok, 1} ~> fn x -> x + 1 end.()
+      2
+
+      iex> {:error, 1} ~> fn x -> x + 1 end.()
+      {:error, 1}
+
+  In this example, we pipe a value to an anonymous function which will add the value by one, if you pass it a value with `:ok`, it will add one, but if you pass `:error`,
+  it will not call the anonymous function and just return the original value.
+
+  Let's explain in detail, the basic pattern is like `parameter ~> func`.
+  
+  `~>` is a macro, when `parameter` is kind of `{:ok, value}`, it will extract value and pass it to 
+  `func` like `func(value)`, when `parameter` is kind of `{:error, value}`, `~>` will not call `func` and just return the `{:error, value}` without modification.
+
+  `~>>` is also a macro, when `parameter` is kind of `{:error, value}`, `~>>` behaves the same as `~>`, when `parameter` is kind of `{:ok, value}`, it will call `func` just 
+  as `~>` does, but in the end, it will package the value into a new `{:ok, value}` format, then you can pipe the result to another function.
+
+  Seems interesting, but how this can help us to simplify error handling? Let's see a more complex example.
 
   ## Why using AutoError
 

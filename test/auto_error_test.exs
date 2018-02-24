@@ -2,6 +2,8 @@ defmodule AutoErrorTest do
   use ExUnit.Case
   import AutoError
 
+  doctest AutoError
+
   def add_one(x), do: x + 1
   def add_one_ok(x), do: {:ok, x + 1}
   def fail_test(_), do: {:error, "fail"}
