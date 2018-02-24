@@ -1,21 +1,10 @@
 defmodule AutoError do
   @error_msg "AutoError can only support processing {:ok, term} or {:error, term} with function"
 
-  defp unpipe(expr) do
-    unpipe(expr, []) |> Enum.reverse()
-  end
-
-  defp unpipe({:~>, _, [left, right]}, acc) do
-    unpipe(right, unpipe({:chain, left}, acc))
-  end
-
-  defp unpipe({:~>>, _, [left, right]}, acc) do
-    unpipe(right, unpipe({:functor, left}, acc))
-  end
-
-  defp unpipe(other, acc) do
-    [other | acc]
-  end
+  defp unpipe(expr), do: unpipe(expr, []) |> Enum.reverse()
+  defp unpipe({:~>, _, [left, right]}, acc), do: unpipe(right, unpipe({:chain, left}, acc))
+  defp unpipe({:~>>, _, [left, right]}, acc), do: unpipe(right, unpipe({:functor, left}, acc))
+  defp unpipe(other, acc), do: [other | acc]
 
   def chain({:error, _} = error, _), do: error
 
@@ -32,6 +21,7 @@ defmodule AutoError do
   def chain(_, _), do: raise(@error_msg)
 
   def functor({:error, _} = error, _), do: error
+
   def functor({:ok, value}, func) do
     {:ok, func.(value)}
   rescue
@@ -41,6 +31,7 @@ defmodule AutoError do
     e ->
       {:error, e}
   end
+
   def functor(_, _), do: raise(@error_msg)
 
   defp pipe(left, {func, line, nil}) do
@@ -55,7 +46,9 @@ defmodule AutoError do
 
   defp pipe({:functor, left}, {func, _, args}) do
     quote do
-       AutoError.functor(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)
+      AutoError.functor(unquote(left), fn value ->
+        unquote(func)(value, unquote_splicing(args))
+      end)
     end
   end
 
@@ -67,22 +60,4 @@ defmodule AutoError do
       pipe(acc, expr)
     end)
   end
-
-  # Chain
-  # defmacro {:ok, value} ~> {f, metadata, nil}, do: {f, metadata, [value]}
-  # defmacro {:ok, value} ~> {f, metadata, args}, do: {f, metadata, [value | args]}
-  # defmacro {:error, err} ~> {_f, _metadata, _args}, do: {:error, err}
-  # defmacro _ ~> _, do: quote(do: raise(unquote(@error_msg)))
-
-  # # Chain
-  # defmacro {:ok, value} ~> {f, metadata, nil}, do: {f, metadata, [value]}
-  # defmacro {:ok, value} ~> {f, metadata, args}, do: {f, metadata, [value | args]}
-  # defmacro {:error, err} ~> {_f, _metadata, _args}, do: {:error, err}
-  # defmacro _ ~> _, do: quote(do: raise(unquote(@error_msg)))
-
-  # # Functor
-  # defmacro {:ok, value} ~>> {f, metadata, args}, do: {:ok, {f, metadata, [value]}}
-  # defmacro {:ok, value} ~>> {f, metadata, args}, do: {:ok, {f, metadata, [value | args]}}
-  # defmacro {:error, err} ~>> {_f, _metadata, _args}, do: {:error, err}
-  # defmacro _ ~>> __, do: quote(do: raise(unquote(@error_msg)))
 end
