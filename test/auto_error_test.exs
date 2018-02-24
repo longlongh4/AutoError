@@ -35,4 +35,38 @@ defmodule AutoErrorTest do
       fn -> 1 ~> add_one() end
     )
   end
+
+  test "test nested condition" do
+    assert {:error, "fail"} == 1 |> add_one_ok ~> fail_test() ~> add_one()
+
+    assert {:ok, 5} ==
+             0
+             |> wake_up()
+             ~>> wear_trousers()
+             ~> buy_goods()
+             ~> cook()
+
+    assert {:error, "alarm clock doesn't ring"} ==
+             0
+             |> wake_up_fail()
+             ~>> wear_trousers()
+             ~> buy_goods()
+             ~> cook()
+  end
+
+  defp wake_up(value), do: {:ok, value + 1}
+  defp wake_up_fail(_), do: {:error, "alarm clock doesn't ring"}
+  defp wear_trousers(value), do: value + 1
+
+  defmodule TestModule do
+    def inner_test(x), do: {:ok, x + 1}
+  end
+
+  defp buy_goods(value) do
+    value
+    |> (fn x -> {:ok, x + 1} end).()
+    ~> TestModule.inner_test()
+  end
+
+  defp cook(value), do: {:ok, value + 1}
 end

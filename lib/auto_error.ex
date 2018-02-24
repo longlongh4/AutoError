@@ -31,6 +31,18 @@ defmodule AutoError do
 
   def chain(_, _), do: raise(@error_msg)
 
+  def functor({:error, _} = error, _), do: error
+  def functor({:ok, value}, func) do
+    {:ok, func.(value)}
+  rescue
+    e ->
+      {:error, e}
+  catch
+    e ->
+      {:error, e}
+  end
+  def functor(_, _), do: raise(@error_msg)
+
   defp pipe(left, {func, line, nil}) do
     pipe(left, {func, line, []})
   end
@@ -43,8 +55,7 @@ defmodule AutoError do
 
   defp pipe({:functor, left}, {func, _, args}) do
     quote do
-      {:ok,
-       AutoError.chain(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)}
+       AutoError.functor(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)
     end
   end
 
