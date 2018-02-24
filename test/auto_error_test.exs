@@ -3,6 +3,7 @@ defmodule AutoErrorTest do
   import AutoError
 
   def add_one(x), do: x + 1
+  def add_one_ok(x), do: {:ok, x+1}
   def fail_test(_), do: {:error, "fail"}
   def exception_test(_), do: raise("crased, haha")
 
@@ -10,6 +11,8 @@ defmodule AutoErrorTest do
     assert 1 == {:ok, 1} ~> (fn x -> x end).()
     assert 2 == {:ok, 1} ~> add_one()
     assert 2 == {:ok, 1} ~> add_one
+    assert {:ok, 3} == {:ok, 1} ~> add_one_ok ~> add_one_ok
+    assert 3 == {:ok, 1} ~> add_one_ok ~> add_one
     assert {:error, 1} = {:error, 1} ~> add_one
     assert {:error, "fail"} == {:ok, 1} ~> fail_test() ~> add_one()
 
