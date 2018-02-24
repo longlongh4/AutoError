@@ -3,7 +3,7 @@ defmodule AutoErrorTest do
   import AutoError
 
   def add_one(x), do: x + 1
-  def add_one_ok(x), do: {:ok, x+1}
+  def add_one_ok(x), do: {:ok, x + 1}
   def fail_test(_), do: {:error, "fail"}
   def exception_test(_), do: raise("crased, haha")
 
@@ -29,6 +29,10 @@ defmodule AutoErrorTest do
   end
 
   test "test format error" do
-    assert_raise(RuntimeError, "AutoError can only support processing {:ok, term} or {:error, term} with function", fn -> 1 ~> add_one() end) 
+    assert_raise(
+      RuntimeError,
+      "AutoError can only support processing {:ok, term} or {:error, term} with function",
+      fn -> 1 ~> add_one() end
+    )
   end
 end

@@ -43,7 +43,8 @@ defmodule AutoError do
 
   defp pipe({:functor, left}, {func, _, args}) do
     quote do
-      {:ok, AutoError.chain(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)}
+      {:ok,
+       AutoError.chain(unquote(left), fn value -> unquote(func)(value, unquote_splicing(args)) end)}
     end
   end
 
