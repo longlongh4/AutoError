@@ -31,7 +31,7 @@ defmodule AutoErrorTest do
   test "test format error" do
     assert_raise(
       RuntimeError,
-      "AutoError can only support processing {:ok, term} or {:error, term} with function",
+      "AutoError can only support processing {:ok, any()} or {:error, any()} with function",
       fn -> 1 ~> add_one() end
     )
   end
