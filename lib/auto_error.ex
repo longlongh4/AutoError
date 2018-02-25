@@ -1,15 +1,9 @@
 defmodule AutoError do
-  @moduledoc """
+  @moduledoc ~S"""
   ***AutoError*** helps you to pipe between functions returning `{:ok, _}` or `{:error, _}` easily.
 
   ## Usage
   ```elixir
-  def deps do
-    [{:auto_error, "~> 0.1"}]
-  end
-
-  # ...
-
   import AutoError
   ```
 
@@ -38,10 +32,26 @@ defmodule AutoError do
   `~>` is a macro, when `parameter` is kind of `{:ok, value}`, it will extract value and pass it to 
   `func` like `func(value)`, when `parameter` is kind of `{:error, value}`, `~>` will not call `func` and just return the `{:error, value}` without modification.
 
-  `~>>` is also a macro, when `parameter` is kind of `{:error, value}`, `~>>` behaves the same as `~>`, when `parameter` is kind of `{:ok, value}`, it will call `func` just 
+  `~>>` is also a macro, when `parameter` is kind of `{:error, value}`, `~>>` behaves the same as `~>`, when `parameter` is kind of `{:ok, value}`, it will call `func` 
   as `~>` does, but in the end, it will package the value into a new `{:ok, value}` format, then you can pipe the result to another function.
 
   Seems interesting, but how this can help us to simplify error handling? Let's see a more complex example.
+      
+      iex> {:ok, 1} ~>> (&(&1 + 1)).() ~>> (&(&1 + 1)).() ~>> (&(&1 + 1)).()
+      {:ok, 4}
+
+      iex> {:ok, 1} ~> (&({:error, "Whoops:#{&1}"})).() ~>> (&(&1 + 1)).() ~> (&(&1 + 1)).()
+      {:error, "Whoops:1"}
+
+      iex> {:ok, 1} ~>> (&(&1 + 1)).() ~> (&({:error, "Whoops:#{&1}"})).() ~>> 
+      ...> (&(&1 + 1)).() ~> (&(&1 + 1)).()
+      {:error, "Whoops:2"}
+
+      iex> {:ok, 1} ~>> (&(&1 + 1)).() |> IO.inspect() ~> (&({:error, "Whoops:#{&1}"})).() ~>> 
+      ...> (&(&1 + 1)).() |> IO.inspect() ~>> (&(&1 + 1)).()
+      {:ok, 2}
+      {:error, "Whoops:2"}
+      {:error, "Whoops:2"}
 
   ## Why using AutoError
 
@@ -62,6 +72,11 @@ defmodule AutoError do
       but can't recognize `>>>` which is also a [valid operator](https://github.com/elixir-lang/elixir/blob/master/lib/elixir/pages/Operators.md) in Elixir.
   6. Hard to learn, ***WitchCraft*** supports more concept in Monad, and it even brings in a new `TypeClass`, if you want to use a lot of Monad related operations, 
       this is great, but if you just want to solve error handling, this seems overhead, you need to learn a lot before you start. 
+  
+  ## Thanks
+
+  Special thanks to [Falood](https://github.com/falood), he helps me a lot when designing this library.
+      
   """
 
   @error_msg "AutoError can only support processing {:ok, any()} or {:error, any()} with function"
