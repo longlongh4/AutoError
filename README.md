@@ -18,9 +18,10 @@ end
 
 
 ## Usage
-  ```elixir
-  import AutoError
-  ```
+
+```elixir
+import AutoError
+```
 
   AutoError is easy to use, it provides two new operators `~>` and `~>>`, `~>` is called a **chain** and `~>>` is called a **functor**, 
   don't need to concern about the new concept. Let's learn by some examples.
@@ -77,19 +78,19 @@ end
 
   Now, let's explain the examples one by one:
 
-    1. the first example is simple, we pass `{:ok, 1}` to three `add_one` function one by one, because `add_one` function won't encapsulate
-       the result into a new `{:ok, _}` struct, so we use `~>>` to package the result into `{:ok, _}` struct to continue processing.
-    2. in the second example, we replaced the first `add_one` function with a function that returns `{:error, err_msg}`, in `err_msg` we record the 
-       value when the error happens. As we can see, the final result is `{:error, "Whoops:1"}`, means that the following two `add_one` function doesn’t run.
-       If you check the code carefully, you may notice that for the last `add_one` function, I use `~>` in the pipe, this doesn't have any special meanings,
-       because there is an error before this pipe, so `~>` and '~>>' will get the same result.
-    3. for the third example, we add a `add_one` function before return `{:error, _}`, so the final result changes to `{:error, "Whoops:2"}`, because the first 
-       `add_one` runs.
-    4. This example seems interesting, we combine `~>>`, `~>` and `|>` in the same pipeline. After first `add_one` function, we will get `{:ok, 2}`, then we pipe it
-       to `IO.inspect()`, next we return an error and record the current value, so we get `{:error, "Whoops:2"}`, we won't run `add_one` for the value because it is 
-       already an error, but wait, why it prints another {:error, "Whoops:2"}, because the second `IO.inspect()` is controller by "|>", no matter what values it is, it 
-       will always run the function. This behavior is different with the **With Syntax** which will return immediately when the error happens, with **AutoError**, you can 
-       observe the pipeline anywhere, whether success or failure.
+1. the first example is simple, we pass `{:ok, 1}` to three `add_one` function one by one, because `add_one` function won't encapsulate
+   the result into a new `{:ok, _}` struct, so we use `~>>` to package the result into `{:ok, _}` struct to continue processing.
+2. in the second example, we replaced the first `add_one` function with a function that returns `{:error, err_msg}`, in `err_msg` we record the 
+   value when the error happens. As we can see, the final result is `{:error, "Whoops:1"}`, means that the following two `add_one` function doesn’t run.
+   If you check the code carefully, you may notice that for the last `add_one` function, I use `~>` in the pipe, this doesn't have any special meanings,
+   because there is an error before this pipe, so `~>` and '~>>' will get the same result.
+3. for the third example, we add a `add_one` function before return `{:error, _}`, so the final result changes to `{:error, "Whoops:2"}`, because the first 
+   `add_one` runs.
+4. This example seems interesting, we combine `~>>`, `~>` and `|>` in the same pipeline. After first `add_one` function, we will get `{:ok, 2}`, then we pipe it
+   to `IO.inspect()`, next we return an error and record the current value, so we get `{:error, "Whoops:2"}`, we won't run `add_one` for the value because it is 
+   already an error, but wait, why it prints another {:error, "Whoops:2"}, because the second `IO.inspect()` is controller by "|>", no matter what values it is, it 
+   will always run the function. This behavior is different with the **With Syntax** which will return immediately when the error happens, with **AutoError**, you can 
+   observe the pipeline anywhere, whether success or failure.
 
 ## Advanced Examples
 
