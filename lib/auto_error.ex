@@ -53,6 +53,14 @@ defmodule AutoError do
       {:error, "Whoops:2"}
       {:error, "Whoops:2"}
 
+  ## Advanced Examples
+
+  Sometimes, functions will raise exceptions. I know the art of **Let it crash**. But when processing some complex workflow as a unit, we can't just crash it,
+  we need to try to recover and deliver the result as much as we can. So in ***AutoError***, we capture the exception and report as `{:error, exception}`.
+
+      iex> {:ok, 1} ~>> fn _ ->raise("network error") end.() ~>> (&(&1 + 1)).()
+      {:error, %RuntimeError{message: "network error"}}
+
   ## Why using AutoError
 
   There will be a lot of errors in a production environment, which we need to handle carefully. Even though
@@ -86,9 +94,7 @@ defmodule AutoError do
   defp unpipe({:~>>, _, [left, right]}, acc), do: unpipe(right, unpipe({:functor, left}, acc))
   defp unpipe(other, acc), do: [other | acc]
 
-  @doc """
-  chain function
-  """
+  @doc false
   @spec chain({:ok, any()} | {:error, any()}, fun()) :: any()
   def chain({:error, _} = value, _), do: value
 
@@ -104,9 +110,7 @@ defmodule AutoError do
 
   def chain(_, _), do: raise(@error_msg)
 
-  @doc """
-  functor function
-  """
+  @doc false
   @spec functor({:ok, any()} | {:error, any()}, fun()) :: {:ok, any()} | {:error, any()}
   def functor({:error, _} = value, _), do: value
 
