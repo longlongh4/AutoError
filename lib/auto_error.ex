@@ -28,7 +28,7 @@ defmodule AutoError do
   it will not call the anonymous function and just return the original value.
 
   Let's explain in detail, the basic pattern is like `parameter ~> func`.
-  
+
   `~>` is a macro, when `parameter` is kind of `{:ok, value}`, it will extract value and pass it to 
   `func` like `func(value)`, when `parameter` is kind of `{:error, value}`, `~>` will not call `func` and just return the `{:error, value}` without modification.
 
@@ -52,6 +52,29 @@ defmodule AutoError do
       {:ok, 2}
       {:error, "Whoops:2"}
       {:error, "Whoops:2"}
+
+  There are two kinds of functions: **non-deterministic function** and **deterministic function**
+  
+  * **non-deterministic function**: this function may succeed or fail. For example, a network request or user authentication 
+     will generate a new `{:ok, _}` or `{:error, _}`
+  * **deterministic function**: this function will guarantee to succeed. For example, the `add_one` function in the above example, 
+    it just returns the bare result.
+
+  Now, let's explain the examples one by one:
+
+    1. the first example is simple, we pass `{:ok, 1}` to three `add_one` function one by one, because `add_one` function won't encapsulate
+       the result into a new `{:ok, _}` struct, so we use `~>>` to package the result into `{:ok, _}` struct to continue processing.
+    2. in the second example, we replaced the first `add_one` function with a function that returns `{:error, err_msg}`, in `err_msg` we record the 
+       value when the error happens. As we can see, the final result is `{:error, "Whoops:1"}`, means that the following two `add_one` function doesn’t run.
+       If you check the code carefully, you may notice that for the last `add_one` function, I use `~>` in the pipe, this doesn't have any special meanings,
+       because there is an error before this pipe, so `~>` and '~>>' will get the same result.
+    3. for the third example, we add a `add_one` function before return `{:error, _}`, so the final result changes to `{:error, "Whoops:2"}`, because the first 
+       `add_one` runs.
+    4. This example seems interesting, we combine `~>>`, `~>` and `|>` in the same pipeline. After first `add_one` function, we will get `{:ok, 2}`, then we pipe it
+       to `IO.inspect()`, next we return an error and record the current value, so we get `{:error, "Whoops:2"}`, we won't run `add_one` for the value because it is 
+       already an error, but wait, why it prints another {:error, "Whoops:2"}, because the second `IO.inspect()` is controller by "|>", no matter what values it is, it 
+       will always run the function. This behavior is different with the **With Syntax** which will return immediately when the error happens, with **AutoError**, you can 
+       observe the pipeline anywhere, whether success or failure.
 
   ## Advanced Examples
 
@@ -80,7 +103,7 @@ defmodule AutoError do
       but can't recognize `>>>` which is also a [valid operator](https://github.com/elixir-lang/elixir/blob/master/lib/elixir/pages/Operators.md) in Elixir.
   6. Hard to learn, ***WitchCraft*** supports more concept in Monad, and it even brings in a new `TypeClass`, if you want to use a lot of Monad related operations, 
       this is great, but if you just want to solve error handling, this seems overhead, you need to learn a lot before you start. 
-  
+
   ## Thanks
 
   Special thanks to [Falood](https://github.com/falood), he helps me a lot when designing this library.
@@ -145,12 +168,21 @@ defmodule AutoError do
   end
 
   @doc """
-  ~>
+  Pass the result of left to right as the first argument if the result is {:ok. _}, else return the result directly
+
+  ## Parameters
+    - left: whether a data in format {:ok|:error, any()} or a function whose result is in that format
+    - right: function or pipeline to continue
   """
   defmacro left ~> right, do: unpipe({:~>, [], [left, right]}) |> reduce_pipe()
-  
+
   @doc """
-  ~>>
+  Pass the result of left to right as the first argument if the result is {:ok. _}, else return the result directly. 
+  The difference from ~> is that it will package the result of right into {:ok, _} format.
+
+  ## Parameters
+    - left: whether a data in format {:ok|:error, any()} or a function whose result is in that format
+    - right: function or pipeline to continue
   """
   defmacro left ~>> right, do: unpipe({:~>>, [], [left, right]}) |> reduce_pipe()
 
